@@ -2,8 +2,8 @@
 {
     public interface IConfigurationHelper
     {
-        string GetConnectionString(IArgumentsHelper argumentsHelper);
-        string GetProvider(IArgumentsHelper argumentsHelper);
-        void SetAppConfig(IArgumentsHelper argumentsHelper);
+        string GetConnectionString();
+        string GetProvider();
+        void SetAppConfig();
     }
 }

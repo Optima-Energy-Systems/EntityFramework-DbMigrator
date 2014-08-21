@@ -33,28 +33,26 @@ namespace DbMigrator
                 return outputHelper.Exit(messageFactory.Get(MessageType.Success));
             }
 
-            var dependencies = migrationHelper.LoadDependencies(argumentsHelper);
+            var dependencies = migrationHelper.LoadDependencies();
             AppDomain.CurrentDomain.AssemblyResolve +=
                 (sender, eventArgs) => dependencies.FirstOrDefault(x => x.FullName == eventArgs.Name);
 
-            var assembly = migrationHelper.LoadAssembly(argumentsHelper, messageFactory, out error);
+            var assembly = migrationHelper.LoadAssembly(out error);
             if (error != null)
                 return outputHelper.Exit(error);
 
-            var context = migrationHelper.GetContextFromAssembly(assembly, argumentsHelper, messageFactory,
-                out error);
+            var context = migrationHelper.GetContextFromAssembly(assembly, out error);
             if (error != null)
                 return outputHelper.Exit(error);
 
-            configurationHelper.SetAppConfig(argumentsHelper);
+            configurationHelper.SetAppConfig();
 
-            var connectionString = configurationHelper.GetConnectionString(argumentsHelper);
-            var provider = configurationHelper.GetProvider(argumentsHelper);
+            var connectionString = configurationHelper.GetConnectionString();
+            var provider = configurationHelper.GetProvider();
             if (string.IsNullOrEmpty(connectionString))
                 return outputHelper.Exit(messageFactory.Get(MessageType.MissingConnectionString));
 
-            var config = migrationHelper.GetConfigurationInstance(assembly, argumentsHelper, context,
-                connectionString, provider, messageFactory, out error);
+            var config = migrationHelper.GetConfigurationInstance(assembly, context, connectionString, provider, out error);
             if (error != null)
                 return outputHelper.Exit(error);
 
@@ -66,9 +64,7 @@ namespace DbMigrator
                 return outputHelper.Exit(messageFactory.Get(MessageType.Success));
             }
 
-            var migrationResult = migrationHelper.DoMigration(migrator, targetMigration, showScript, scriptPath,
-                outputHelper, messageFactory);
-
+            var migrationResult = migrationHelper.DoMigration(migrator, targetMigration, showScript, scriptPath);
             return outputHelper.Exit(migrationResult);
         }
     }

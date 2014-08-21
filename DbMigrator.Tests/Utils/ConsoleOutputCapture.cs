@@ -3,7 +3,7 @@ using System.IO;
 
 namespace DbMigrator.Tests.Utils
 {
-    public class ConsoleOutputCapture : IDisposable
+    public sealed class ConsoleOutputCapture : IDisposable
     {
         private readonly StringWriter _stringWriter;
         private readonly TextWriter _originalOutput;

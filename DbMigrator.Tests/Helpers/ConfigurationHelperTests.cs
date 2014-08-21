@@ -15,7 +15,7 @@ namespace DbMigrator.Tests.Helpers
             public TestableHelper(bool setupProvider = true)
             {
                 SetupArgumentHelper(setupProvider);
-                Helper = new ConfigurationHelper();
+                Helper = new ConfigurationHelper(ArgumentsHelper.Object);
             }
 
             private void SetupArgumentHelper(bool setupProvider)
@@ -44,7 +44,7 @@ namespace DbMigrator.Tests.Helpers
         public void GettingTheConnectionStringReturnsTheConnectionStringInTheArgumentsCollection()
         {
             var test = new TestableHelper();
-            var result = test.Helper.GetConnectionString(test.ArgumentsHelper.Object);
+            var result = test.Helper.GetConnectionString();
             Assert.Equal("mockconnectionstring", result);
             test.ArgumentsHelper.Verify(m => m.Get(CommandLineParameters.ConnectionString), Times.Once());
         }
@@ -53,7 +53,7 @@ namespace DbMigrator.Tests.Helpers
         public void GettingTheProviderReturnsTheProviderInTheArgumentsCollection()
         {
             var test = new TestableHelper();
-            var result = test.Helper.GetProvider(test.ArgumentsHelper.Object);
+            var result = test.Helper.GetProvider();
             Assert.Equal("mockprovider", result);
             test.ArgumentsHelper.Verify(m => m.Get(CommandLineParameters.Provider), Times.Once());
         }
@@ -62,7 +62,7 @@ namespace DbMigrator.Tests.Helpers
         public void GettingTheProviderReturnsTheDefaultProviderIfNoProviderFound()
         {
             var test = new TestableHelper(false);
-            var result = test.Helper.GetProvider(test.ArgumentsHelper.Object);
+            var result = test.Helper.GetProvider();
             Assert.Equal("System.Data.SqlClient", result);
             test.ArgumentsHelper.Verify(m => m.Get(CommandLineParameters.Provider), Times.Once());
         }

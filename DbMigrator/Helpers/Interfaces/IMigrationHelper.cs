@@ -9,17 +9,14 @@ namespace DbMigrator.Helpers.Interfaces
 {
     public interface IMigrationHelper
     {
-        Assembly LoadAssembly(IArgumentsHelper argumentsHelper, IMessageFactory messageFactory, out IMessage message);
+        Assembly LoadAssembly(out IMessage message);
 
-        Type GetContextFromAssembly(Assembly assembly, IArgumentsHelper argumentsHelper, IMessageFactory messageFactory,
-            out IMessage message);
+        Type GetContextFromAssembly(Assembly assembly, out IMessage message);
 
-        IEnumerable<Assembly> LoadDependencies(IArgumentsHelper argumentsHelper);
+        IEnumerable<Assembly> LoadDependencies();
 
-        DbMigrationsConfiguration GetConfigurationInstance(Assembly assembly, IArgumentsHelper argumentsHelper,
-            Type context, string connectionString, string provider, IMessageFactory messageFactory, out IMessage message);
+        DbMigrationsConfiguration GetConfigurationInstance(Assembly assembly, Type context, string connectionString, string provider, out IMessage message);
 
-        IMessage DoMigration(MigratorBase migrator, string targetMigration, bool showScript, string scriptPath,
-            IOutputHelper outputHelper, IMessageFactory messageFactory);
+        IMessage DoMigration(MigratorBase migrator, string targetMigration, bool showScript, string scriptPath);
     }
 }
