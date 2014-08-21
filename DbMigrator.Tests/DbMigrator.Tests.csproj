@@ -48,9 +48,11 @@
     <Compile Include="Helpers\ArgumentsHelperTests.cs" />
     <Compile Include="CommandLineParametersTests.cs" />
     <Compile Include="Helpers\ConfigurationHelperTests.cs" />
+    <Compile Include="Helpers\OutputHelperTests.cs" />
     <Compile Include="MessageFactoryTests.cs" />
     <Compile Include="MessageTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\ConsoleOutputCapture.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

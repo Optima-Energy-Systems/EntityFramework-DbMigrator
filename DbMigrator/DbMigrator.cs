@@ -17,17 +17,16 @@ namespace DbMigrator
         public static int Main(string[] args, IArgumentsHelper argumentsHelper, IMigrationHelper migrationHelper,
             IConfigurationHelper configurationHelper, IOutputHelper outputHelper, IMessageFactory messageFactory)
         {
-        IMessage error;
+            IMessage error;
 
             // process the command line arguments
             argumentsHelper.BuildArgumentsDictionary(args);
 
             // get the target migration
             var targetMigration = argumentsHelper.Get(CommandLineParameters.TargetMigration);
-            var scriptPath = argumentsHelper.Get(CommandLineParameters.ScriptPath);
-
             var showScript = argumentsHelper.ContainsKey(CommandLineParameters.Script);
-
+            var scriptPath = argumentsHelper.Get(CommandLineParameters.ScriptPath);
+            
             if (argumentsHelper.ContainsKey(CommandLineParameters.Help))
             {
                 outputHelper.ShowHelpOutput();
@@ -40,12 +39,12 @@ namespace DbMigrator
 
             var assembly = migrationHelper.LoadAssembly(argumentsHelper, messageFactory, out error);
             if (error != null)
-                outputHelper.Exit(error);
+                return outputHelper.Exit(error);
 
             var context = migrationHelper.GetContextFromAssembly(assembly, argumentsHelper, messageFactory,
                 out error);
             if (error != null)
-                outputHelper.Exit(error);
+                return outputHelper.Exit(error);
 
             configurationHelper.SetAppConfig(argumentsHelper);
 

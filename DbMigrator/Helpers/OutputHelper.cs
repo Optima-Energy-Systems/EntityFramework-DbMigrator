@@ -132,7 +132,7 @@ namespace DbMigrator.Helpers
             if (string.IsNullOrEmpty(targetMigration))
                 return;
 
-            Console.WriteLine("Tartget Migration: {0}", targetMigration);
+            Console.WriteLine("Target Migration: {0}", targetMigration);
         }
     }
 }

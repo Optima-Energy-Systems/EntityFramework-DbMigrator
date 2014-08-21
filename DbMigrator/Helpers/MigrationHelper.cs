@@ -40,7 +40,13 @@ namespace DbMigrator.Helpers
             try
             {
                 var path = GetDllPath(argumentsHelper, messageFactory, out message);
-                return message != null ? null : Assembly.Load(path);
+                return message != null ? null : Assembly.LoadFile(path);
+            }
+            catch (FileLoadException exp)
+            {
+                message = messageFactory.Get(MessageType.Exception);
+                message.Exception = exp;
+                return null;
             }
             catch (ReflectionTypeLoadException exp)
             {
@@ -72,14 +78,14 @@ namespace DbMigrator.Helpers
 
                 if (contexts.Length == 1)
                 {
-                    message = messageFactory.Get(MessageType.Success);
+                    message = null;
                     return contexts.FirstOrDefault();
                 }
 
                 var contextName = argumentsHelper.Get(CommandLineParameters.ContextName);
                 if (!string.IsNullOrEmpty(contextName))
                 {
-                    message = messageFactory.Get(MessageType.Success);
+                    message = null;
                     return contexts
                         .FirstOrDefault(
                             x => string.Equals(x.Name, contextName, StringComparison.InvariantCultureIgnoreCase)
