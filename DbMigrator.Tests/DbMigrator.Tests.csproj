@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{28ACB760-C3ED-47CA-BDCB-97283F257C5D}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{5F636E3B-B555-46D8-9AF2-937B3426B7EF}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DbMigrator</RootNamespace>
-    <AssemblyName>DbMigrator</AssemblyName>
+    <RootNamespace>DbMigrator.Tests</RootNamespace>
+    <AssemblyName>DbMigrator.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -31,48 +29,37 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>DbMigrator.DbMigrator</StartupObject>
-  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EntityFramework">
-      <HintPath>..\packages\EntityFramework.6.1.1\lib\net45\EntityFramework.dll</HintPath>
-    </Reference>
-    <Reference Include="EntityFramework.SqlServer">
-      <HintPath>..\packages\EntityFramework.6.1.1\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    <Reference Include="Moq">
+      <HintPath>..\packages\Moq.4.2.1408.0717\lib\net40\Moq.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="xunit">
+      <HintPath>..\packages\xunit.1.9.2\lib\net20\xunit.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommandLineParameters.cs" />
-    <Compile Include="DbMigrator.cs" />
-    <Compile Include="Helpers\ArgumentsHelper.cs" />
-    <Compile Include="Helpers\MigrationHelper.cs" />
-    <Compile Include="Helpers\ConfigurationHelper.cs" />
-    <Compile Include="Helpers\Interfaces\IArgumentsHelper.cs" />
-    <Compile Include="Helpers\Interfaces\IMigrationHelper.cs" />
-    <Compile Include="Helpers\Interfaces\IConfigurationHelper.cs" />
-    <Compile Include="Helpers\Interfaces\IOutputHelper.cs" />
-    <Compile Include="Helpers\OutputHelper.cs" />
-    <Compile Include="Interfaces\IMessage.cs" />
-    <Compile Include="Messages\Message.cs" />
-    <Compile Include="Messages\MessageFactory.cs" />
-    <Compile Include="Messages\MessageType.cs" />
-    <Compile Include="Interfaces\IMessageFactory.cs" />
-    <Compile Include="Messages\Messages.cs" />
+    <Compile Include="Helpers\ArgumentsHelperTests.cs" />
+    <Compile Include="CommandLineParametersTests.cs" />
+    <Compile Include="Helpers\ConfigurationHelperTests.cs" />
+    <Compile Include="MessageFactoryTests.cs" />
+    <Compile Include="MessageTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DbMigrator\DbMigrator.csproj">
+      <Project>{28acb760-c3ed-47ca-bdcb-97283f257c5d}</Project>
+      <Name>DbMigrator</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

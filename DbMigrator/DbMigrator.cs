@@ -1,174 +1,76 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Entity.Infrastructure;
-using System.Data.Entity.Migrations;
-using System.IO;
+﻿using DbMigrator.Helpers;
+using DbMigrator.Helpers.Interfaces;
+using DbMigrator.Interfaces;
+using DbMigrator.Messages;
+using System;
 using System.Linq;
-using System.Reflection;
 
 namespace DbMigrator
 {
     public class DbMigrator
     {
-        private static IDictionary<string, string> _parameters;
         public static int Main(string[] args)
         {
-            try
-            {
-                _parameters = Helpers.ProcessCommandLineArguments(args);
-
-                var targetMigration = Helpers.GetParameterValue(_parameters, CommandLineParameters.TargetMigration);
-                var scriptPath = Helpers.GetParameterValue(_parameters, CommandLineParameters.ScriptPath);
-
-                bool showScript = _parameters.ContainsKey(CommandLineParameters.Script),
-                    showInfo = _parameters.ContainsKey(CommandLineParameters.Info),
-                    showHelp = _parameters.ContainsKey(CommandLineParameters.Help);
-
-                if (showHelp)
-                {
-                    Console.WriteLine(Helpers.GetHelpString());
-                    return ReturnCodes.Success;
-                }
-
-                var dllPath = Helpers.GetParameterValue(_parameters, CommandLineParameters.DllPath);
-                if (string.IsNullOrEmpty(dllPath))
-                {
-                    Console.WriteLine(Helpers.FormatErrorMessage(Messages.DllPathMissing));
-                    return ReturnCodes.ParameterMissing;
-                }
-
-                if (!File.Exists(dllPath))
-                {
-                    Console.WriteLine(Helpers.FormatErrorMessage(Messages.DllNotFound));
-                    return ReturnCodes.ParameterInvalid;
-                }
-
-                var dependencies = Helpers.LoadDependencies(_parameters);
-                AppDomain.CurrentDomain.AssemblyResolve +=
-                    (sender, eventArgs) => dependencies.FirstOrDefault(x => x.FullName == eventArgs.Name);
-
-                var assembly = Assembly.LoadFile(dllPath);
-                int errorCode;
-                string errorMessage;
-
-                var context = Helpers.GetContextFromAssembly(assembly, _parameters, out errorCode, out errorMessage);
-                if (context == null)
-                {
-                    Console.WriteLine(errorMessage);
-                    return errorCode;
-                }
-
-                // Get the connection string
-                SetAppConfig(_parameters); // Load the app.config from the specified location is necessary
-
-                var connectionString = Helpers.GetConnectionString(_parameters);
-                var provider = Helpers.GetProvider(_parameters);
-                
-                if (string.IsNullOrEmpty(connectionString))
-                {
-                    Console.WriteLine(Helpers.FormatErrorMessage(Messages.ConnectionStringNotFound));
-                    return ReturnCodes.MissingConnectionString;
-                }
-
-                var configClassName = Helpers.GetParameterValue(_parameters, CommandLineParameters.Configuration);
-                if (string.IsNullOrEmpty(configClassName))
-                {
-                    Console.WriteLine(Helpers.FormatErrorMessage(Messages.ConfigurationClassMissing));
-                    return ReturnCodes.MissingConfigurationClass;
-                }
-
-                var configuration = assembly
-                    .GetTypes()
-                    .FirstOrDefault(x => x.FullName == _parameters[CommandLineParameters.Configuration]);
-
-                if (configuration == null)
-                {
-                    Console.WriteLine(Helpers.FormatErrorMessage(Messages.ConfigurationTypeNotFound));
-                    return ReturnCodes.ConfigurationTypeNotFound;
-                }
-
-                var configConstructor = configuration.GetConstructor(Type.EmptyTypes);
-                if (configConstructor == null)
-                {
-                    Console.WriteLine(Helpers.FormatErrorMessage(Messages.ConfigurationTypeNotFound));
-                    return ReturnCodes.ConfigurationTypeNotFound;
-                }
-
-                var configInstance = configConstructor.Invoke(new object[0]) as DbMigrationsConfiguration;
-                if (configInstance == null)
-                {
-                    Console.WriteLine(Helpers.FormatErrorMessage(Messages.UnableToCreateInstanceOfConfirguation));
-                    return ReturnCodes.ConfigurationTypeNotInstantiated;
-                }
-
-                configInstance.ContextType = context;
-                configInstance.MigrationsAssembly = assembly;
-                configInstance.TargetDatabase = new DbConnectionInfo(connectionString, provider);
-                configInstance.AutomaticMigrationDataLossAllowed = false;
-                configInstance.AutomaticMigrationsEnabled = true;
-
-                var migrator = new System.Data.Entity.Migrations.DbMigrator(configInstance);
-                if (showInfo)
-                {
-                    Helpers.ShowInformationOutput(connectionString, provider, configInstance, migrator, targetMigration,
-                        showScript, scriptPath);
-                    return ReturnCodes.Success;
-                }
-
-                var pendingMigrations = migrator.GetPendingMigrations().ToArray();
-                if (!pendingMigrations.Any())
-                {
-                    Console.WriteLine(Messages.NoPendingMigrations);
-                }
-                else
-                {
-                    Console.WriteLine("Pending Migrations: ");
-                    foreach (var migration in pendingMigrations)
-                    {
-                        Console.WriteLine("\t {0}", migration);
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(targetMigration))
-                {
-                    Console.WriteLine("Target Migration: {0}", targetMigration);
-                }
-
-                if (showScript)
-                {
-                    Helpers.OutputScript(migrator, targetMigration, scriptPath);
-                    return ReturnCodes.Success;
-                }
-
-                // If we have got to this point it means we want to update the database...
-                if (!string.IsNullOrEmpty(targetMigration))
-                {
-                    migrator.Update(targetMigration);
-                    return ReturnCodes.Success;
-                }
-
-                migrator.Update();
-                return ReturnCodes.Success;
-            }
-            catch (ReflectionTypeLoadException rtle)
-            {
-                Console.WriteLine(Helpers.FormatErrorMessage(rtle));
-                return ReturnCodes.DependenciesException;
-            }
-            catch (Exception exp)
-            {
-                Console.WriteLine(Helpers.FormatErrorMessage(exp));
-                return ReturnCodes.Exception;
-            }
+            return Main(args, new ArgumentsHelper(), new MigrationHelper(), new ConfigurationHelper(), new OutputHelper(), new MessageFactory());
         }
 
-        private static void SetAppConfig(IDictionary<string, string> parameters)
+        public static int Main(string[] args, IArgumentsHelper argumentsHelper, IMigrationHelper migrationHelper,
+            IConfigurationHelper configurationHelper, IOutputHelper outputHelper, IMessageFactory messageFactory)
         {
-            if (parameters.ContainsKey(CommandLineParameters.AppConfigPath) &&
-                File.Exists(parameters[CommandLineParameters.AppConfigPath]))
+        IMessage error;
+
+            // process the command line arguments
+            argumentsHelper.BuildArgumentsDictionary(args);
+
+            // get the target migration
+            var targetMigration = argumentsHelper.Get(CommandLineParameters.TargetMigration);
+            var scriptPath = argumentsHelper.Get(CommandLineParameters.ScriptPath);
+
+            var showScript = argumentsHelper.ContainsKey(CommandLineParameters.Script);
+
+            if (argumentsHelper.ContainsKey(CommandLineParameters.Help))
             {
-                AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", parameters[CommandLineParameters.AppConfigPath]);
+                outputHelper.ShowHelpOutput();
+                return outputHelper.Exit(messageFactory.Get(MessageType.Success));
             }
+
+            var dependencies = migrationHelper.LoadDependencies(argumentsHelper);
+            AppDomain.CurrentDomain.AssemblyResolve +=
+                (sender, eventArgs) => dependencies.FirstOrDefault(x => x.FullName == eventArgs.Name);
+
+            var assembly = migrationHelper.LoadAssembly(argumentsHelper, messageFactory, out error);
+            if (error != null)
+                outputHelper.Exit(error);
+
+            var context = migrationHelper.GetContextFromAssembly(assembly, argumentsHelper, messageFactory,
+                out error);
+            if (error != null)
+                outputHelper.Exit(error);
+
+            configurationHelper.SetAppConfig(argumentsHelper);
+
+            var connectionString = configurationHelper.GetConnectionString(argumentsHelper);
+            var provider = configurationHelper.GetProvider(argumentsHelper);
+            if (string.IsNullOrEmpty(connectionString))
+                return outputHelper.Exit(messageFactory.Get(MessageType.MissingConnectionString));
+
+            var config = migrationHelper.GetConfigurationInstance(assembly, argumentsHelper, context,
+                connectionString, provider, messageFactory, out error);
+            if (error != null)
+                return outputHelper.Exit(error);
+
+            var migrator = new System.Data.Entity.Migrations.DbMigrator(config);
+            if (argumentsHelper.ContainsKey(CommandLineParameters.Info))
+            {
+                outputHelper.ShowInformationOutput(connectionString, provider, config, migrator, targetMigration,
+                    showScript, scriptPath);
+                return outputHelper.Exit(messageFactory.Get(MessageType.Success));
+            }
+
+            var migrationResult = migrationHelper.DoMigration(migrator, targetMigration, showScript, scriptPath,
+                outputHelper, messageFactory);
+
+            return outputHelper.Exit(migrationResult);
         }
     }
 }
