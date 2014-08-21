@@ -7,6 +7,28 @@ using System.Linq;
 
 namespace DbMigrator
 {
+    /*
+     * DbMigrator - Replacement for Migrate.exe
+     * Command Line Switches: 
+     * 
+     * Required: 
+     *  -DllPath={Path} - The path to the DLL containing the migrations and DbContext
+     *  -DependsOn={Path} - A Command seperated list of dependent DLLs that are not loaded from the GAC
+     *  -MigrationConfig={Name} - The fully qualified name of the migration configuration class - This class must inheric from DbMigrationConfiguration OR DbMigrationConfiguration<T>
+     *  -ConnectionString={ConnectionString} OR -ConnectionStringName={Name} -
+     *      - ConnectionString={ConnectionString} - The connection string
+     *      - ConnectionStringName={ConnectionStringName} - The connection string to lookup in the config file
+     * 
+     * Optional: 
+     *  -Context={ContextName} - If more than one class derives from DbMigrationConfiguration the context name is needed to identify the context
+     *  -Provider={ProviderName} - The name of the database connection provider - Defaults to System.Data.SqlClient if one has not been provided as either a command line option or in the connection string
+     *  -TargetMigration={MigrationName} - The target migration
+     *  -Script - Instead of upgrading the database just generate the SQL script
+     *  -ScriptPath={Path} - Path to output the generated SQL script to.
+     *  -Info - Display information about what migrations have already been applied and migrations are pending
+     *  -Help - Displays the usage help
+     */
+
     public class DbMigrator
     {
         public static int Main(string[] args)
