@@ -9,22 +9,13 @@ namespace DbMigrator.Helpers
     {
         private const string DefaultProvider = "System.Data.SqlClient";
 
-        private readonly IArgumentsHelper _argumentsHelper;
-
-        public ConfigurationHelper() : this(new ArgumentsHelper()) { }
-
-        public ConfigurationHelper(IArgumentsHelper argumentsHelper)
+        public string GetConnectionString(IArgumentsHelper argumentsHelper)
         {
-            _argumentsHelper = argumentsHelper;
-        }
-
-        public string GetConnectionString()
-        {
-            var connectionString = _argumentsHelper.Get(CommandLineParameters.ConnectionString);
+            var connectionString = argumentsHelper.Get(CommandLineParameters.ConnectionString);
             if (!string.IsNullOrEmpty(connectionString))
                 return connectionString;
 
-            var connectionStringName = _argumentsHelper.Get(CommandLineParameters.ConnectionStringName);
+            var connectionStringName = argumentsHelper.Get(CommandLineParameters.ConnectionStringName);
             if (string.IsNullOrEmpty(connectionStringName))
                 return string.Empty;
 
@@ -32,14 +23,14 @@ namespace DbMigrator.Helpers
             return configConnectionString == null ? string.Empty : configConnectionString.ConnectionString;
         }
 
-        public string GetProvider()
+        public string GetProvider(IArgumentsHelper argumentsHelper)
         {
             // First check to see if a provider has been provided in the parameters
-            var provider = _argumentsHelper.Get(CommandLineParameters.Provider);
+            var provider = argumentsHelper.Get(CommandLineParameters.Provider);
             if (!string.IsNullOrEmpty(provider))
                 return provider;
 
-            var connectionStringName = _argumentsHelper.Get(CommandLineParameters.ConnectionStringName);
+            var connectionStringName = argumentsHelper.Get(CommandLineParameters.ConnectionStringName);
             if (string.IsNullOrEmpty(connectionStringName))
                 return DefaultProvider;
 
@@ -51,9 +42,9 @@ namespace DbMigrator.Helpers
             return string.IsNullOrEmpty(configConnectionString.ProviderName) ? DefaultProvider : configConnectionString.ProviderName;
         }
 
-        public void SetAppConfig()
+        public void SetAppConfig(IArgumentsHelper argumentsHelper)
         {
-            var configPath = _argumentsHelper.Get(CommandLineParameters.AppConfigPath);
+            var configPath = argumentsHelper.Get(CommandLineParameters.AppConfigPath);
             if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
                 AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", configPath);
         }
