@@ -13,7 +13,7 @@ namespace DbMigrator.Tests.Helpers
             const string expectedOutput = "Target Migration: MockMigration";
             using (var console = new ConsoleOutputCapture())
             {
-                var helper = new OutputHelper();
+                var helper = new OutputHelper(null, null);
                 helper.ShowTargetMigration("MockMigration");
                 Assert.Equal(expectedOutput, console.GetOutput().Trim());
             }
@@ -26,7 +26,7 @@ namespace DbMigrator.Tests.Helpers
             const string expectedOutput = "ERROR 0: Mock Message";
             using (var console = new ConsoleOutputCapture())
             {
-                var helper = new OutputHelper();
+                var helper = new OutputHelper(null, null);
                 var message = new Message(0, "Mock Message");
                 var result = helper.Exit(message);
                 Assert.Equal(expectedCode, result);
@@ -40,7 +40,7 @@ namespace DbMigrator.Tests.Helpers
             const string expectedOutput = "Pending Migrations: \r\n\t- MockPendingMigration";
             using (var console = new ConsoleOutputCapture())
             {
-                var helper = new OutputHelper();
+                var helper = new OutputHelper(null, null);
                 helper.ShowPendingMigrations(new[] {"MockPendingMigration"});
                 Assert.Equal(expectedOutput, console.GetOutput().Trim());
             }
@@ -80,7 +80,7 @@ namespace DbMigrator.Tests.Helpers
 
             using (var console = new ConsoleOutputCapture())
             {
-                var helper = new OutputHelper();
+                var helper = new OutputHelper(null, null);
                 helper.ShowHelpOutput();
                 Assert.Equal(expectedOutput, console.GetOutput().Trim());
             }

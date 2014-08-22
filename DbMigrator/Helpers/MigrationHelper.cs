@@ -1,5 +1,4 @@
-﻿using System.Configuration;
-using DbMigrator.Helpers.Interfaces;
+﻿using DbMigrator.Helpers.Interfaces;
 using DbMigrator.Interfaces;
 using DbMigrator.Messages;
 using System;
@@ -14,45 +13,56 @@ namespace DbMigrator.Helpers
     {
         private const string DbContextType = "System.Data.Entity.DbContext";
 
-        private static string GetDllPath(IArgumentsHelper argumentsHelper, IMessageFactory messageFactory, out IMessage message)
+        private readonly IMessageFactory _messageFactory;
+        private readonly IEntityFrameworkHelper _entityFrameworkHelper;
+        private readonly IOutputHelper _outputHelper;
+
+        public MigrationHelper(IMessageFactory messageFactory, IEntityFrameworkHelper entityFrameworkHelper,
+            IOutputHelper outputHelper)
+        {
+            _messageFactory = messageFactory;
+            _entityFrameworkHelper = entityFrameworkHelper;
+            _outputHelper = outputHelper;
+        }
+
+        private string GetDllPath(string dllPath, out IMessage message)
         {
             message = null;
-            var path = argumentsHelper.Get(CommandLineParameters.DllPath);
-            if (string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(dllPath))
             {
-                message = messageFactory.Get(MessageType.ParameterMissing);
+                message = _messageFactory.Get(MessageType.ParameterMissing);
                 return string.Empty;
             }
 
-            if (File.Exists(path))
-                return path;
+            if (File.Exists(dllPath))
+                return dllPath;
 
-            message = messageFactory.Get(MessageType.ParameterInvalid);
+            message = _messageFactory.Get(MessageType.ParameterInvalid);
             return string.Empty;
         }
 
-        public Assembly LoadAssembly(IArgumentsHelper argumentsHelper, IMessageFactory messageFactory, out IMessage message)
+        public Assembly LoadAssembly(string dllPath, out IMessage message)
         {
             try
             {
-                var path = GetDllPath(argumentsHelper, messageFactory, out message);
+                var path = GetDllPath(dllPath, out message);
                 return message != null ? null : Assembly.LoadFile(path);
             }
             catch (FileLoadException exp)
             {
-                message = messageFactory.Get(MessageType.Exception);
+                message = _messageFactory.Get(MessageType.Exception);
                 message.Exception = exp;
                 return null;
             }
             catch (ReflectionTypeLoadException exp)
             {
-                message = messageFactory.Get(MessageType.DependenciesException);
+                message = _messageFactory.Get(MessageType.DependenciesException);
                 message.Exception = exp;
                 return null;
             }
         }
 
-        public Type GetContextFromAssembly(IArgumentsHelper argumentsHelper, IMessageFactory messageFactory, Assembly assembly, out IMessage message)
+        public Type GetContextFromAssembly(string contextName, Assembly assembly, out IMessage message)
         {
             try
             {
@@ -67,7 +77,7 @@ namespace DbMigrator.Helpers
 
                 if (!contexts.Any())
                 {
-                    message = messageFactory.Get(MessageType.NoContextFound);
+                    message = _messageFactory.Get(MessageType.NoContextFound);
                     return null;
                 }
 
@@ -77,7 +87,6 @@ namespace DbMigrator.Helpers
                     return contexts.FirstOrDefault();
                 }
 
-                var contextName = argumentsHelper.Get(CommandLineParameters.ContextName);
                 if (!string.IsNullOrEmpty(contextName))
                 {
                     message = null;
@@ -87,25 +96,25 @@ namespace DbMigrator.Helpers
                                  || string.Equals(x.FullName, contextName, StringComparison.InvariantCultureIgnoreCase));
                 }
 
-                message = messageFactory.Get(MessageType.ContextNameRequired);
+                message = _messageFactory.Get(MessageType.ContextNameRequired);
                 return null;
             }
             catch (ReflectionTypeLoadException exp)
             {
-                message = messageFactory.Get(MessageType.DependenciesException);
+                message = _messageFactory.Get(MessageType.DependenciesException);
                 message.Exception = exp;
                 return null;
             }
         }
 
-        public object GetConfigurationInstance(IArgumentsHelper argumentsHelper, IEntityFrameworkHelper entityFrameworkHelper, IMessageFactory messageFactory, Assembly assembly, Type context, string connectionString, string provider, out IMessage message)
+        public object GetConfigurationInstance(string configClassName, Assembly assembly, Type context,
+            string connectionString, string provider, out IMessage message)
         {
             try
             {
-                var configClassName = argumentsHelper.Get(CommandLineParameters.Configuration);
                 if (string.IsNullOrEmpty(configClassName))
                 {
-                    message = messageFactory.Get(MessageType.MissingConfigurationClass);
+                    message = _messageFactory.Get(MessageType.MissingConfigurationClass);
                     return null;
                 }
 
@@ -115,30 +124,30 @@ namespace DbMigrator.Helpers
 
                 if (configuration == null)
                 {
-                    message = messageFactory.Get(MessageType.ConfigurationTypeNotFound);
+                    message = _messageFactory.Get(MessageType.ConfigurationTypeNotFound);
                     return null;
                 }
 
                 var configConstructor = configuration.GetConstructor(Type.EmptyTypes);
                 if (configConstructor == null)
                 {
-                    message = messageFactory.Get(MessageType.ConfigurationTypeNotFound);
+                    message = _messageFactory.Get(MessageType.ConfigurationTypeNotFound);
                     return null;
                 }
 
                 var instance = configConstructor.Invoke(new object[0]);
                 if (instance == null)
                 {
-                    message = messageFactory.Get(MessageType.ConfigurationTypeNotInstantiated);
+                    message = _messageFactory.Get(MessageType.ConfigurationTypeNotInstantiated);
                     return null;
                 }
 
-                var dbConnectionInfoInstance = entityFrameworkHelper.GetDbConnectionInfoInstance(connectionString,
-                    provider, messageFactory, out message);
+                var dbConnectionInfoInstance = _entityFrameworkHelper.GetDbConnectionInfoInstance(connectionString,
+                    provider, out message);
 
                 if (dbConnectionInfoInstance == null)
                 {
-                    message = messageFactory.Get(MessageType.UnableToCreateInstanceOfDbConnectionInfo);
+                    message = _messageFactory.Get(MessageType.UnableToCreateInstanceOfDbConnectionInfo);
                     return null;
                 }
 
@@ -147,24 +156,27 @@ namespace DbMigrator.Helpers
                 configuration.GetProperty("TargetDatabase").SetValue(instance, dbConnectionInfoInstance);
                 configuration.GetProperty("AutomaticMigrationDataLossAllowed").SetValue(instance, false);
                 configuration.GetProperty("AutomaticMigrationsEnabled").SetValue(instance, true);
-                
+
                 return instance;
             }
             catch (Exception exp)
             {
-                message = messageFactory.Get(MessageType.Exception);
+                message = _messageFactory.Get(MessageType.Exception);
                 message.Exception = exp;
                 return null;
             }
         }
 
-        public IEnumerable<Assembly> LoadDependencies(IArgumentsHelper argumentsHelper)
+        public IEnumerable<Assembly> LoadDependencies(string entityFrameworkPath, string dependentDlls)
         {
-            var dependencies = new List<Assembly>();
-            var entityFrameworkPath = argumentsHelper.Get(CommandLineParameters.EntityFramework);
-            dependencies.Add(Assembly.LoadFrom(entityFrameworkPath));
+            //var entityFrameworkPath = argumentsHelper.Get(CommandLineParameters.EntityFramework);
+            //var dependentDlls = argumentsHelper.Get(CommandLineParameters.DependentDlls);
 
-            var dependentDlls = argumentsHelper.Get(CommandLineParameters.DependentDlls);
+            var dependencies = new List<Assembly>
+            {
+                Assembly.LoadFrom(entityFrameworkPath)
+            };
+
             if (string.IsNullOrEmpty(dependentDlls))
                 return dependencies;
 
@@ -175,52 +187,53 @@ namespace DbMigrator.Helpers
             return dependencies;
         }
 
-        public IMessage DoMigration(IOutputHelper outputHelper, IMessageFactory messageFactory, IEntityFrameworkHelper entityFrameworkHelper, object configuration, string targetMigration, bool showInfo, bool showScript, string scriptPath, string connectionString, string provider)
+        public IMessage DoMigration(object configuration, string targetMigration, bool showInfo, bool showScript,
+            string scriptPath, string connectionString, string provider)
         {
             try
             {
                 IMessage message;
-                var migrator = entityFrameworkHelper.GetMigratorInstance(configuration, messageFactory, out message);
+                var migrator = _entityFrameworkHelper.GetMigratorInstance(configuration, out message);
                 if (message != null)
                     return message;
 
                 if (migrator == null)
-                    return messageFactory.Get(MessageType.UnableToCreateInstanceOfMigrator);
+                    return _messageFactory.Get(MessageType.UnableToCreateInstanceOfMigrator);
 
                 var migratorType = migrator.GetType();
                 var pendingMigrations =
                     migratorType.GetMethod("GetPendingMigrations").Invoke(migrator, new object[0]) as
                         IEnumerable<string>;
 
-                outputHelper.ShowPendingMigrations(pendingMigrations);
+                _outputHelper.ShowPendingMigrations(pendingMigrations);
 
                 if (showInfo)
                 {
-                    outputHelper.ShowInformationOutput(connectionString, provider, configuration, migrator,
+                    _outputHelper.ShowInformationOutput(connectionString, provider, configuration, migrator,
                         targetMigration, showScript, scriptPath);
-                    return messageFactory.Get(MessageType.Success);
+                    return _messageFactory.Get(MessageType.Success);
                 }
 
                 if (showScript)
                 {
-                    outputHelper.OutputScript(entityFrameworkHelper, migrator, targetMigration, scriptPath,
-                        messageFactory, out message);
-                    return message ?? messageFactory.Get(MessageType.Success);
+                    _outputHelper.OutputScript(migrator, targetMigration, scriptPath, out message);
+                    return message ?? _messageFactory.Get(MessageType.Success);
                 }
 
                 if (!string.IsNullOrEmpty(targetMigration))
                 {
 
-                    migratorType.GetMethod("Update", new[] { typeof(string) }).Invoke(migrator, new object[] { targetMigration });
-                    return messageFactory.Get(MessageType.Success);
+                    migratorType.GetMethod("Update", new[] {typeof (string)})
+                        .Invoke(migrator, new object[] {targetMigration});
+                    return _messageFactory.Get(MessageType.Success);
                 }
 
                 migratorType.GetMethod("Update", Type.EmptyTypes).Invoke(migrator, new object[0]);
-                return messageFactory.Get(MessageType.Success);
+                return _messageFactory.Get(MessageType.Success);
             }
             catch (Exception exp)
             {
-                var message = messageFactory.Get(MessageType.Exception);
+                var message = _messageFactory.Get(MessageType.Exception);
                 message.Exception = exp;
                 return message;
             }

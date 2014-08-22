@@ -7,16 +7,16 @@ namespace DbMigrator.Helpers.Interfaces
 {
     public interface IMigrationHelper
     {
-        Assembly LoadAssembly(IArgumentsHelper argumentsHelper, IMessageFactory messageFactory, out IMessage message);
+        Assembly LoadAssembly(string dllPath, out IMessage message);
 
-        Type GetContextFromAssembly(IArgumentsHelper argumentsHelper, IMessageFactory messageFactory, Assembly assembly, out IMessage message);
+        Type GetContextFromAssembly(string contextName, Assembly assembly, out IMessage message);
 
-        IEnumerable<Assembly> LoadDependencies(IArgumentsHelper argumentsHelper);
+        IEnumerable<Assembly> LoadDependencies(string entityFrameworkPath, string dependentDlls);
 
-        object GetConfigurationInstance(IArgumentsHelper argumentsHelper, IEntityFrameworkHelper entityFrameworkHelper, IMessageFactory messageFactory, Assembly assembly, Type context, string connectionString, string provider, out IMessage message);
+        object GetConfigurationInstance(string configClassName, Assembly assembly, Type context, string connectionString,
+            string provider, out IMessage message);
 
-        IMessage DoMigration(IOutputHelper outputHelper, IMessageFactory messageFactory,
-            IEntityFrameworkHelper entityFrameworkHelper, object configuration, string targetMigration, bool showInfo,
-            bool showScript, string scriptPath, string connectionString, string provider);
+        IMessage DoMigration(object configuration, string targetMigration, bool showInfo, bool showScript,
+            string scriptPath, string connectionString, string provider);
     }
 }

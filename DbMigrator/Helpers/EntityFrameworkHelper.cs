@@ -15,23 +15,28 @@ namespace DbMigrator.Helpers
             MigratorScriptingDecorator = "System.Data.Entity.Migrations.Infrastructure.MigratorScriptingDecorator";
 
         private Assembly _entityFramework;
+        private readonly IMessageFactory _messageFactory;
 
-        public IMessage LoadEntityFramework(IArgumentsHelper argumentsHelper, IMessageFactory messageFactory)
+        public EntityFrameworkHelper(IMessageFactory messageFactory)
         {
-            var path = argumentsHelper.Get(CommandLineParameters.EntityFramework);
-            if (string.IsNullOrEmpty(path))
-                return messageFactory.Get(MessageType.EntityFrameworkPathMissing);
+            _messageFactory = messageFactory;
+        }
 
-            if (!File.Exists(path))
-                return messageFactory.Get(MessageType.CannotFindEntityFramework);
+        public IMessage LoadEntityFramework(string entityFrameworkPath)
+        {
+            if (string.IsNullOrEmpty(entityFrameworkPath))
+                return _messageFactory.Get(MessageType.EntityFrameworkPathMissing);
 
-            _entityFramework = Assembly.LoadFrom(path);
+            if (!File.Exists(entityFrameworkPath))
+                return _messageFactory.Get(MessageType.CannotFindEntityFramework);
+
+            _entityFramework = Assembly.LoadFrom(entityFrameworkPath);
             return null;
         }
 
-        public object GetMigratorInstance(object dbMigrationConfiguration, IMessageFactory messageFactory, out IMessage message)
+        public object GetMigratorInstance(object dbMigrationConfiguration, out IMessage message)
         {
-            var migrator = GetTypeFromAssembly(DbMigratorType, messageFactory, out message);
+            var migrator = GetTypeFromAssembly(DbMigratorType, out message);
             if (migrator == null)
                 return null;
 
@@ -41,15 +46,15 @@ namespace DbMigrator.Helpers
                 : constr.Invoke(new[] {dbMigrationConfiguration});
         }
 
-        public object GetDbConnectionInfoInstance(string connectionString, string provider, IMessageFactory messageFactory, out IMessage message)
+        public object GetDbConnectionInfoInstance(string connectionString, string provider, out IMessage message)
         {
-            var dbConnectionInfoType = GetTypeFromAssembly(DbConnectionInfoType, messageFactory, out message);
+            var dbConnectionInfoType = GetTypeFromAssembly(DbConnectionInfoType, out message);
             if (message != null)
                 return null;
 
             if (dbConnectionInfoType == null)
             {
-                message = messageFactory.Get(MessageType.CannotFindDbConnectionInfoType);
+                message = _messageFactory.Get(MessageType.CannotFindDbConnectionInfoType);
                 return null;
             }
 
@@ -57,19 +62,19 @@ namespace DbMigrator.Helpers
             if (constr != null) 
                 return constr.Invoke(new object[] {connectionString, provider});
 
-            message = messageFactory.Get(MessageType.UnableToCreateInstanceOfDbConnectionInfo);
+            message = _messageFactory.Get(MessageType.UnableToCreateInstanceOfDbConnectionInfo);
             return null;
         }
 
-        public object GetMigratorScriptingDecoratorInstance(object migrator, IMessageFactory messageFactory, out IMessage message)
+        public object GetMigratorScriptingDecoratorInstance(object migrator, out IMessage message)
         {
-            var migratorScriptingDecorator = GetTypeFromAssembly(MigratorScriptingDecorator, messageFactory, out message);
+            var migratorScriptingDecorator = GetTypeFromAssembly(MigratorScriptingDecorator, out message);
             if (message != null)
                 return null;
 
             if (migratorScriptingDecorator == null)
             {
-                message = messageFactory.Get(MessageType.CannotFindScriptingDecoratorType);
+                message = _messageFactory.Get(MessageType.CannotFindScriptingDecoratorType);
                 return null;
             }
 
@@ -77,11 +82,11 @@ namespace DbMigrator.Helpers
             if (ctor != null) 
                 return ctor.Invoke(new[] {migrator});
 
-            message = messageFactory.Get(MessageType.UnableToCreateInstanceOfScriptingDecorator);
+            message = _messageFactory.Get(MessageType.UnableToCreateInstanceOfScriptingDecorator);
             return null;
         }
 
-        private Type GetTypeFromAssembly(string typeName, IMessageFactory messageFactory, out IMessage message)
+        private Type GetTypeFromAssembly(string typeName, out IMessage message)
         {
             message = null;
             if (_entityFramework != null)
@@ -89,7 +94,7 @@ namespace DbMigrator.Helpers
                     .GetTypes()
                     .FirstOrDefault(x => x.FullName == typeName);
 
-            message = messageFactory.Get(MessageType.EntityFrameworkNotLoaded);
+            message = _messageFactory.Get(MessageType.EntityFrameworkNotLoaded);
             return null;
         }
     }

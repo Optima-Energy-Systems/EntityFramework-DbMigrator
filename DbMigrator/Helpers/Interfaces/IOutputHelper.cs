@@ -9,9 +9,8 @@ namespace DbMigrator.Helpers.Interfaces
 
         void ShowInformationOutput(string connectionString, string provider, object config,
             object migrator, string targetMigration, bool script, string scriptPath);
-
-        void OutputScript(IEntityFrameworkHelper entityFrameworkHelper, object migrator, string target, string path,
-            IMessageFactory messageFactory, out IMessage message);
+        
+        void OutputScript(object migrator, string target, string path, out IMessage message);
 
         int Exit(IMessage message);
 

@@ -9,6 +9,15 @@ namespace DbMigrator.Helpers
 {
     public class OutputHelper : IOutputHelper
     {
+        private readonly IEntityFrameworkHelper _entityFrameworkHelper;
+        private readonly IMessageFactory _messageFactory;
+
+        public OutputHelper(IEntityFrameworkHelper entityFrameworkHelper, IMessageFactory messageFactory)
+        {
+            _entityFrameworkHelper = entityFrameworkHelper;
+            _messageFactory = messageFactory;
+        }
+
         public void ShowHelpOutput()
         {
             Console.WriteLine("Usage: Data.exe\r\n" +
@@ -103,9 +112,9 @@ namespace DbMigrator.Helpers
             }
         }
 
-        public void OutputScript(IEntityFrameworkHelper entityFrameworkHelper, object migrator, string targetMigration, string outputPath, IMessageFactory messageFactory, out IMessage message)
+        public void OutputScript(object migrator, string targetMigration, string outputPath, out IMessage message)
         {
-            var scriptor = entityFrameworkHelper.GetMigratorScriptingDecoratorInstance(migrator, messageFactory, out message);
+            var scriptor = _entityFrameworkHelper.GetMigratorScriptingDecoratorInstance(migrator, out message);
             if (message != null)
                 return;
 

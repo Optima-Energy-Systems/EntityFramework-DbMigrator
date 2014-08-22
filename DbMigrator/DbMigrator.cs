@@ -32,62 +32,72 @@ namespace DbMigrator
 
     public class DbMigrator
     {
+        // Create instances of the required classes.
+        private static readonly IArgumentsHelper ArgumentsHelper = new ArgumentsHelper();
+        private static readonly IConfigurationHelper ConfigurationHelper = new ConfigurationHelper();
+        private static readonly IMessageFactory MessageFactory = new MessageFactory();
+        private static readonly IEntityFrameworkHelper EntityFrameworkHelper = new EntityFrameworkHelper(MessageFactory);
+        private static readonly IOutputHelper OutputHelper = new OutputHelper(EntityFrameworkHelper, MessageFactory);
+        private static readonly IMigrationHelper MigrationHelper = new MigrationHelper(MessageFactory, EntityFrameworkHelper, OutputHelper);
+
         public static int Main(string[] args)
         {
-            return Main(args, new ArgumentsHelper(), new EntityFrameworkHelper(), new MigrationHelper(), new ConfigurationHelper(), new OutputHelper(), new MessageFactory());
-        }
-
-        public static int Main(string[] args, IArgumentsHelper argumentsHelper, IEntityFrameworkHelper entityFrameworkHelper, IMigrationHelper migrationHelper,
-            IConfigurationHelper configurationHelper, IOutputHelper outputHelper, IMessageFactory messageFactory)
-        {
-            IMessage error;
-
             // process the command line arguments
-            argumentsHelper.BuildArgumentsDictionary(args);
+            ArgumentsHelper.BuildArgumentsDictionary(args);
 
-            error = entityFrameworkHelper.LoadEntityFramework(argumentsHelper, messageFactory);
+            var error = EntityFrameworkHelper.LoadEntityFramework(ArgumentsHelper.Get(CommandLineParameters.EntityFramework));
             if (error != null)
-                return outputHelper.Exit(error);
+                return OutputHelper.Exit(error);
 
             // get the target migration
-            var targetMigration = argumentsHelper.Get(CommandLineParameters.TargetMigration);
-            var showScript = argumentsHelper.ContainsKey(CommandLineParameters.Script);
-            var scriptPath = argumentsHelper.Get(CommandLineParameters.ScriptPath);
+            var targetMigration = ArgumentsHelper.Get(CommandLineParameters.TargetMigration);
+            var showScript = ArgumentsHelper.ContainsKey(CommandLineParameters.Script);
+            var scriptPath = ArgumentsHelper.Get(CommandLineParameters.ScriptPath);
             
-            if (argumentsHelper.ContainsKey(CommandLineParameters.Help))
+            if (ArgumentsHelper.ContainsKey(CommandLineParameters.Help))
             {
-                outputHelper.ShowHelpOutput();
-                return outputHelper.Exit(messageFactory.Get(MessageType.Success));
+                OutputHelper.ShowHelpOutput();
+                return OutputHelper.Exit(MessageFactory.Get(MessageType.Success));
             }
 
-            var dependencies = migrationHelper.LoadDependencies(argumentsHelper);
+            var dependencies =
+                MigrationHelper.LoadDependencies(ArgumentsHelper.Get(CommandLineParameters.EntityFramework),
+                    ArgumentsHelper.Get(CommandLineParameters.DependentDlls));
+
             AppDomain.CurrentDomain.AssemblyResolve +=
                 (sender, eventArgs) => dependencies.FirstOrDefault(x => x.FullName == eventArgs.Name);
 
-            var assembly = migrationHelper.LoadAssembly(argumentsHelper, messageFactory, out error);
+            var assembly = MigrationHelper.LoadAssembly(ArgumentsHelper.Get(CommandLineParameters.DllPath), out error);
             if (error != null)
-                return outputHelper.Exit(error);
+                return OutputHelper.Exit(error);
 
-            var context = migrationHelper.GetContextFromAssembly(argumentsHelper, messageFactory, assembly, out error);
+            var context = MigrationHelper.GetContextFromAssembly(ArgumentsHelper.Get(CommandLineParameters.ContextName), assembly, out error);
             if (error != null)
-                return outputHelper.Exit(error);
+                return OutputHelper.Exit(error);
 
-            configurationHelper.SetAppConfig(argumentsHelper);
+            ConfigurationHelper.SetAppConfig(ArgumentsHelper.Get(CommandLineParameters.AppConfigPath));
 
-            var connectionString = configurationHelper.GetConnectionString(argumentsHelper);
-            var provider = configurationHelper.GetProvider(argumentsHelper);
+            var connectionStringName = ArgumentsHelper.Get(CommandLineParameters.ConnectionStringName);
+            var connectionString = ConfigurationHelper.GetConnectionString(ArgumentsHelper.Get(CommandLineParameters.ConnectionString),
+                    connectionStringName);
+
+            var provider = ConfigurationHelper.GetProvider(ArgumentsHelper.Get(CommandLineParameters.Provider),
+                connectionStringName);
+
             if (string.IsNullOrEmpty(connectionString))
-                return outputHelper.Exit(messageFactory.Get(MessageType.MissingConnectionString));
+                return OutputHelper.Exit(MessageFactory.Get(MessageType.MissingConnectionString));
 
-            var config = migrationHelper.GetConfigurationInstance(argumentsHelper, entityFrameworkHelper, messageFactory, assembly, context, connectionString, provider, out error);
+            var config =
+                MigrationHelper.GetConfigurationInstance(ArgumentsHelper.Get(CommandLineParameters.Configuration),
+                    assembly, context, connectionString, provider, out error);
             if (error != null)
-                return outputHelper.Exit(error);
+                return OutputHelper.Exit(error);
 
-            var migrationResult = migrationHelper.DoMigration(outputHelper, messageFactory, entityFrameworkHelper,
-                config, targetMigration, argumentsHelper.ContainsKey(CommandLineParameters.Info), showScript, scriptPath,
+            var migrationResult = MigrationHelper.DoMigration(config, targetMigration,
+                ArgumentsHelper.ContainsKey(CommandLineParameters.Info), showScript, scriptPath,
                 connectionString, provider);
 
-            return outputHelper.Exit(migrationResult);
+            return OutputHelper.Exit(migrationResult);
         }
     }
 }
