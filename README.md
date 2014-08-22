@@ -8,7 +8,7 @@ The aim of **EntityFramework-DbMigrator** is to provide a simple to use and flex
 Using DbMigrator
 ===
 
-	DbMigrator.exe -DllPath={Path} 
+	DbMigrator.exe -EntityFramework={Path} -DllPath={Path} 
 		-DependsOn={Path1,Path2} 
 		-MigrationConfig={Value} 
 		-ConnectionString={ConnectionString}
@@ -25,6 +25,7 @@ Details Command Line Switches:
 
 Required:
 
+- **-EntityFramework**=*{Path}* - The path to the Entity Framework DLL - This is required as a command line argument to enable migrations on multiple versions of entity framework (rather than just the version referenced in the solution).
 - **-DllPath**=*{Path}* - The path to the DLL containing the migrations and DbContext
 - **-DependsOn**=*{Path}* - A Command seperated list of dependent DLLs that are not loaded from the GAC
 - **-MigrationConfig**=*{value}* - The fully qualified name of the migration configuration class - This class must inheric from DbMigrationConfiguration _OR_ DbMigrationConfiguration<T>
