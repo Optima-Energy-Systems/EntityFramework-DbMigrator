@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data.Entity.Migrations;
-using System.Data.Entity.Migrations.Infrastructure;
+﻿using System.Collections.Generic;
 using DbMigrator.Interfaces;
 
 namespace DbMigrator.Helpers.Interfaces
@@ -11,10 +7,11 @@ namespace DbMigrator.Helpers.Interfaces
     {
         void ShowHelpOutput();
 
-        void ShowInformationOutput(string connectionString, string provider, DbMigrationsConfiguration config,
-            MigratorBase migrator, string targetMigration, bool script, string scriptPath);
+        void ShowInformationOutput(string connectionString, string provider, object config,
+            object migrator, string targetMigration, bool script, string scriptPath);
 
-        void OutputScript(MigratorBase migrator, string target, string path);
+        void OutputScript(IEntityFrameworkHelper entityFrameworkHelper, object migrator, string target, string path,
+            IMessageFactory messageFactory, out IMessage message);
 
         int Exit(IMessage message);
 

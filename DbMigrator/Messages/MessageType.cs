@@ -12,6 +12,16 @@
         MissingConfigurationClass = 7,
         ConfigurationTypeNotFound = 8,
         ConfigurationTypeNotInstantiated = 9,
-        Exception = 10
+        Exception = 10,
+        EntityFrameworkPathMissing = 11,
+        CannotFindEntityFramework = 12,
+        EntityFrameworkNotLoaded = 13,
+        CannotFindDbMigrationsConfigurationType = 14,
+        CannotFindDbMigratorType = 15,
+        CannotFindDbConnectionInfoType = 16,
+        UnableToCreateInstanceOfDbConnectionInfo = 17,
+        UnableToCreateInstanceOfMigrator = 18,
+        CannotFindScriptingDecoratorType = 19,
+        UnableToCreateInstanceOfScriptingDecorator = 20
     }
 }

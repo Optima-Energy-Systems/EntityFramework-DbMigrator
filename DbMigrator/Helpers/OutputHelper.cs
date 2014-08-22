@@ -2,8 +2,6 @@
 using System.Linq;
 using DbMigrator.Helpers.Interfaces;
 using System;
-using System.Data.Entity.Migrations;
-using System.Data.Entity.Migrations.Infrastructure;
 using System.IO;
 using DbMigrator.Interfaces;
 
@@ -43,33 +41,53 @@ namespace DbMigrator.Helpers
                               "\t-MigrationConfig: The fully qualified class name of  DbMigrationConfiguration type.");
         }
 
-        public void ShowInformationOutput(string connectionString, string provider, DbMigrationsConfiguration config,
-            MigratorBase migrator, string targetMigration, bool script, string scriptPath)
+        public void ShowInformationOutput(string connectionString, string provider, object config,
+            object migrator, string targetMigration, bool script, string scriptPath)
         {
+            var configType = config.GetType();
+            var migratorType = migrator.GetType();
+
+            var contextType = configType.GetProperty("ContextType").GetValue(config);
+            var contextName = contextType.GetType().GetProperty("Name").GetValue(contextType);
+
             Console.WriteLine("Connection String: {0}\r\nProvider: {1}\r\nMigration Context: {2}",
                 connectionString,
                 provider,
-                config.ContextType.Name);
+                contextName);
 
             Console.WriteLine("Available Migrations: ");
-            var localMigrations = migrator.GetLocalMigrations();
-            foreach (var localMigration in localMigrations)
+            var localMigrations =
+                migratorType.GetMethod("GetLocalMigrations").Invoke(migrator, new object[0]) as IEnumerable<string>;
+
+            if (localMigrations != null)
             {
-                Console.WriteLine("\t- {0}", localMigration);
+                foreach (var localMigration in localMigrations)
+                {
+                    Console.WriteLine("\t- {0}", localMigration);
+                }
             }
 
             Console.WriteLine("\r\nMigrations Already Applied: ");
-            var dbMigrations = migrator.GetDatabaseMigrations();
-            foreach (var dbMigration in dbMigrations)
+            var dbMigrations =
+                migratorType.GetMethod("GetDatabaseMigrations").Invoke(migrator, new object[0]) as IEnumerable<string>;//migrator.GetDatabaseMigrations();
+
+            if (dbMigrations != null)
             {
-                Console.WriteLine("\t- {0}", dbMigration);
+                foreach (var dbMigration in dbMigrations)
+                {
+                    Console.WriteLine("\t- {0}", dbMigration);
+                }
             }
 
             Console.WriteLine("\r\nAll Pending Migrations: ");
-            var pendingMigrations = migrator.GetPendingMigrations();
-            foreach (var pendingMigration in pendingMigrations)
+
+            var pendingMigrations = migratorType.GetMethod("GetPendingMigrations").Invoke(migrator, new object[0]) as IEnumerable<string>; //migrator.GetPendingMigrations();
+            if (pendingMigrations != null)
             {
-                Console.WriteLine("\t- {0}", pendingMigration);
+                foreach (var pendingMigration in pendingMigrations)
+                {
+                    Console.WriteLine("\t- {0}", pendingMigration);
+                }
             }
 
             Console.WriteLine(string.Empty);
@@ -85,10 +103,21 @@ namespace DbMigrator.Helpers
             }
         }
 
-        public void OutputScript(MigratorBase migrator, string targetMigration, string outputPath)
+        public void OutputScript(IEntityFrameworkHelper entityFrameworkHelper, object migrator, string targetMigration, string outputPath, IMessageFactory messageFactory, out IMessage message)
         {
-            var scriptor = new MigratorScriptingDecorator(migrator);
-            var sqlScript = string.IsNullOrEmpty(targetMigration) ? scriptor.ScriptUpdate(null, null) : scriptor.ScriptUpdate(null, targetMigration);
+            var scriptor = entityFrameworkHelper.GetMigratorScriptingDecoratorInstance(migrator, messageFactory, out message);
+            if (message != null)
+                return;
+
+            var scriptorType = scriptor.GetType();
+            var scriptParams = new object[2];
+            scriptParams[0] = null;
+            if (string.IsNullOrEmpty(targetMigration))
+                scriptParams[1] = null;
+            else
+                scriptParams[1] = targetMigration;
+
+            var sqlScript = scriptorType.GetMethod("ScriptUpdate").Invoke(scriptor, scriptParams) as string;
             if (!string.IsNullOrEmpty(outputPath))
             {
                 if (File.Exists(outputPath))

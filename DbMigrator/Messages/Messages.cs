@@ -11,5 +11,16 @@
         public const string ConfigurationTypeNotFound = "Unable to find DbMigration configuration type.";
         public const string UnableToCreateInstanceOfConfirguation = "Unable to create a DbMigration instance.";
         public const string NoPendingMigrations = "No pending migrations.";
+        public const string EntityFrameworkPathMissing = "Missing path to Entity Framework dll.";
+        public const string CannotFindEntityFramework = "Cannot find Entity Framework dll.";
+        public const string EntityFrameworkNotLoaded = "Entity Framework assembly not loaded.";
+        public const string CannotFindDbMigrationsConfigurationType = "Cannot find DbMigrationsConfiguration type in Entity Framework assembly.";
+        public const string CannotFindDbMigratorType = "Cannot find DbMigrator type in Entity Framework assembly.";
+        public const string CannotFindDbConnectionInfoType = "Cannot find DbConnectionInfo type in Entity Framework assembly.";
+        public const string UnableToCreateInstanceOfDbConnectionInfo = "Unabel to create an instance of DbConnectionInfo.";
+        public const string UnableToCreateInstanceOfMigrator = "Unable to create an instance of DbMigrator.";
+        public const string CannotFindScriptingDecoratorType = "Cannot find MigratorScriptingDecorator type in Entity Framework assembly.";
+        public const string UnableToCreateInstanceOfScriptingDecorator = "Unable to create an instance of DbMigrator.";
+        
     }
 }

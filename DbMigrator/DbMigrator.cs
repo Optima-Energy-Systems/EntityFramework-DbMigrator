@@ -12,6 +12,7 @@ namespace DbMigrator
      * Command Line Switches: 
      * 
      * Required: 
+     *  -EntityFramework={Path} - The path to the correct Entity Framework DLL - Added to enable migrations on multiple versions of entity framework
      *  -DllPath={Path} - The path to the DLL containing the migrations and DbContext
      *  -DependsOn={Path} - A Command seperated list of dependent DLLs that are not loaded from the GAC
      *  -MigrationConfig={Name} - The fully qualified name of the migration configuration class - This class must inheric from DbMigrationConfiguration OR DbMigrationConfiguration<T>
@@ -33,16 +34,20 @@ namespace DbMigrator
     {
         public static int Main(string[] args)
         {
-            return Main(args, new ArgumentsHelper(), new MigrationHelper(), new ConfigurationHelper(), new OutputHelper(), new MessageFactory());
+            return Main(args, new ArgumentsHelper(), new EntityFrameworkHelper(), new MigrationHelper(), new ConfigurationHelper(), new OutputHelper(), new MessageFactory());
         }
 
-        public static int Main(string[] args, IArgumentsHelper argumentsHelper, IMigrationHelper migrationHelper,
+        public static int Main(string[] args, IArgumentsHelper argumentsHelper, IEntityFrameworkHelper entityFrameworkHelper, IMigrationHelper migrationHelper,
             IConfigurationHelper configurationHelper, IOutputHelper outputHelper, IMessageFactory messageFactory)
         {
             IMessage error;
 
             // process the command line arguments
             argumentsHelper.BuildArgumentsDictionary(args);
+
+            error = entityFrameworkHelper.LoadEntityFramework(argumentsHelper, messageFactory);
+            if (error != null)
+                return outputHelper.Exit(error);
 
             // get the target migration
             var targetMigration = argumentsHelper.Get(CommandLineParameters.TargetMigration);
@@ -74,19 +79,14 @@ namespace DbMigrator
             if (string.IsNullOrEmpty(connectionString))
                 return outputHelper.Exit(messageFactory.Get(MessageType.MissingConnectionString));
 
-            var config = migrationHelper.GetConfigurationInstance(argumentsHelper, messageFactory, assembly, context, connectionString, provider, out error);
+            var config = migrationHelper.GetConfigurationInstance(argumentsHelper, entityFrameworkHelper, messageFactory, assembly, context, connectionString, provider, out error);
             if (error != null)
                 return outputHelper.Exit(error);
 
-            var migrator = new System.Data.Entity.Migrations.DbMigrator(config);
-            if (argumentsHelper.ContainsKey(CommandLineParameters.Info))
-            {
-                outputHelper.ShowInformationOutput(connectionString, provider, config, migrator, targetMigration,
-                    showScript, scriptPath);
-                return outputHelper.Exit(messageFactory.Get(MessageType.Success));
-            }
+            var migrationResult = migrationHelper.DoMigration(outputHelper, messageFactory, entityFrameworkHelper,
+                config, targetMigration, argumentsHelper.ContainsKey(CommandLineParameters.Info), showScript, scriptPath,
+                connectionString, provider);
 
-            var migrationResult = migrationHelper.DoMigration(outputHelper, messageFactory, migrator, targetMigration, showScript, scriptPath);
             return outputHelper.Exit(migrationResult);
         }
     }

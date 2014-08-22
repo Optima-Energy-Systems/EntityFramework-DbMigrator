@@ -2,6 +2,7 @@
 {
     public static class CommandLineParameters
     {
+        public const string EntityFramework = "-EntityFramework";
         public const string DllPath = "-DllPath";
         public const string ContextName = "-Context";
         public const string ConnectionString = "-ConnectionString";
