@@ -45,6 +45,8 @@ namespace DbMigrator
             // process the command line arguments
             ArgumentsHelper.BuildArgumentsDictionary(args);
 
+            ConfigurationHelper.SetAppConfig(ArgumentsHelper.Get(CommandLineParameters.AppConfigPath));
+
             var error = EntityFrameworkHelper.LoadEntityFramework(ArgumentsHelper.Get(CommandLineParameters.EntityFramework));
             if (error != null)
                 return OutputHelper.Exit(error);
@@ -74,8 +76,6 @@ namespace DbMigrator
             var context = MigrationHelper.GetContextFromAssembly(ArgumentsHelper.Get(CommandLineParameters.ContextName), assembly, out error);
             if (error != null)
                 return OutputHelper.Exit(error);
-
-            ConfigurationHelper.SetAppConfig(ArgumentsHelper.Get(CommandLineParameters.AppConfigPath));
 
             var connectionStringName = ArgumentsHelper.Get(CommandLineParameters.ConnectionStringName);
             var connectionString = ConfigurationHelper.GetConnectionString(ArgumentsHelper.Get(CommandLineParameters.ConnectionString),

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using DbMigrator.Helpers.Interfaces;
 using System.Configuration;
 
@@ -33,13 +35,24 @@ namespace DbMigrator.Helpers
             if (configConnectionString == null)
                 return DefaultProvider;
 
-            return string.IsNullOrEmpty(configConnectionString.ProviderName) ? DefaultProvider : configConnectionString.ProviderName;
+            return string.IsNullOrEmpty(configConnectionString.ProviderName)
+                ? DefaultProvider
+                : configConnectionString.ProviderName;
         }
 
         public void SetAppConfig(string configPath)
         {
-            if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
-                AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", configPath);
+            if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+                return;
+
+
+            AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", configPath);
+
+            var configurationManagerType = typeof (ConfigurationManager);
+            configurationManagerType.GetField("s_initState", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, 0);
+            configurationManagerType.GetField("s_configSystem", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, null);
+            configurationManagerType.Assembly.GetTypes().First(x => x.FullName == "System.Configuration.ClientConfigPaths")
+                .GetField("s_current", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, null);
         }
     }
 }
