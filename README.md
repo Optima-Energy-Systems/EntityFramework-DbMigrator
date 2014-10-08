@@ -1,12 +1,10 @@
-EntityFramework-DbMigrator
-==========================
+# EntityFramework-DbMigrator #
 
 Replacement for Entity Frameworks migrate.exe that gives better feedback. 
 
 The aim of **EntityFramework-DbMigrator** is to provide a simple to use and flexible replacement for Entity Framework's migrator.exe.
 
-Using DbMigrator
-===
+## Using DbMigrator ##
 
 	DbMigrator.exe -EntityFramework={Path} -DllPath={Path} 
 		-DependsOn={Path1,Path2} 
@@ -20,6 +18,7 @@ Using DbMigrator
 		-ScriptPath={Path}
 		-Info
 		-Help
+        -ConfigFile={Path}
 
 Details Command Line Switches:
 
@@ -42,3 +41,9 @@ Optional:
 - **-ScriptPath**=*{Path}* - Path to output the generated SQL script to.
 - **-Info** - Display information about what migrations have already been applied and migrations are pending
 - **-Help** - Displays the usage help
+
+## Using a Configuration File ##
+
+Alternatively the arguments can be output to a file and passed to the DbMigrator. The arguments are the same as above and must be passed in one per line, however if a configuration file is to be used **ALL** arguments must be passed in via the configuration file. To invoke DbMigrator with a configuration file use: 
+
+    DbMigrator.exe -ConfigFile={Full Path}

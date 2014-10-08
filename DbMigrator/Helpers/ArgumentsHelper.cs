@@ -1,6 +1,7 @@
 ﻿using DbMigrator.Helpers.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -10,6 +11,17 @@ namespace DbMigrator.Helpers
     {
         public void BuildArgumentsDictionary(string[] parameters)
         {
+            // Allow reading the parameters from a file.
+            if (parameters.Length == 1)
+            {
+                var split = parameters[0].Split(new[] {'='}, StringSplitOptions.RemoveEmptyEntries);
+                if (split.Length == 2 && split[0].Equals(CommandLineParameters.ConfigFile, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    ReadArgumentsFromFile(split[1]);
+                    return;
+                }
+            }
+
             foreach (var arg in parameters)
             {
                 var split = arg.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
@@ -44,6 +56,19 @@ namespace DbMigrator.Helpers
 
                 Add(split[0], split[1]);
             }
+        }
+
+        private void ReadArgumentsFromFile(string path)
+        {
+            string line;
+            var reader = new StreamReader(path);
+            var arguments = new List<string>();
+            while ((line = reader.ReadLine()) != null)
+            {
+                arguments.Add(line);
+            }
+
+            BuildArgumentsDictionary(arguments.ToArray());
         }
 
         public string Get(string parameter)

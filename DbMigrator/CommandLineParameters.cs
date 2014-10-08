@@ -16,5 +16,6 @@
         public const string DependentDlls = "-DependsOn";
         public const string AppConfigPath = "-AppConfig";
         public const string Configuration = "-MigrationConfig";
+        public const string ConfigFile = "-ConfigFile";
     }
 }
