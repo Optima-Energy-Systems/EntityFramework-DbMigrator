@@ -45,6 +45,12 @@ namespace DbMigrator
             // process the command line arguments
             ArgumentsHelper.BuildArgumentsDictionary(args);
 
+            if (ArgumentsHelper.ContainsKey(CommandLineParameters.Help))
+            {
+                OutputHelper.ShowHelpOutput();
+                return OutputHelper.Exit(MessageFactory.Get(MessageType.Success));
+            }
+
             ConfigurationHelper.SetAppConfig(ArgumentsHelper.Get(CommandLineParameters.AppConfigPath));
 
             var error = EntityFrameworkHelper.LoadEntityFramework(ArgumentsHelper.Get(CommandLineParameters.EntityFramework));
@@ -56,12 +62,6 @@ namespace DbMigrator
             var showScript = ArgumentsHelper.ContainsKey(CommandLineParameters.Script);
             var scriptPath = ArgumentsHelper.Get(CommandLineParameters.ScriptPath);
             
-            if (ArgumentsHelper.ContainsKey(CommandLineParameters.Help))
-            {
-                OutputHelper.ShowHelpOutput();
-                return OutputHelper.Exit(MessageFactory.Get(MessageType.Success));
-            }
-
             var dependencies =
                 MigrationHelper.LoadDependencies(ArgumentsHelper.Get(CommandLineParameters.EntityFramework),
                     ArgumentsHelper.Get(CommandLineParameters.DependentDlls));
