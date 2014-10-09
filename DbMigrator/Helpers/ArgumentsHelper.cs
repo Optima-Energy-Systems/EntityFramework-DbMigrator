@@ -1,7 +1,7 @@
 ﻿using DbMigrator.Helpers.Interfaces;
+using DbMigrator.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -9,6 +9,15 @@ namespace DbMigrator.Helpers
 {
     public class ArgumentsHelper : Dictionary<string, string>, IArgumentsHelper
     {
+        private readonly IFileReader _reader;
+
+        public ArgumentsHelper() : this(new FileReader()) { }
+
+        public ArgumentsHelper(IFileReader fileReader)
+        {
+            _reader = fileReader;
+        }
+
         public void BuildArgumentsDictionary(string[] parameters)
         {
             // Allow reading the parameters from a file.
@@ -60,14 +69,7 @@ namespace DbMigrator.Helpers
 
         private void ReadArgumentsFromFile(string path)
         {
-            string line;
-            var reader = new StreamReader(path);
-            var arguments = new List<string>();
-            while ((line = reader.ReadLine()) != null)
-            {
-                arguments.Add(line);
-            }
-
+            var arguments = _reader.ReadFileLines(path);
             BuildArgumentsDictionary(arguments.ToArray());
         }
 

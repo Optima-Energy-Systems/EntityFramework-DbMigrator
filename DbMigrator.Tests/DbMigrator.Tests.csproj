@@ -45,6 +45,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArgumentsHelperTests.cs" />
     <Compile Include="Helpers\ArgumentsHelperTests.cs" />
     <Compile Include="CommandLineParametersTests.cs" />
     <Compile Include="Helpers\ConfigurationHelperTests.cs" />
