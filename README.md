@@ -47,3 +47,8 @@ Optional:
 Alternatively the arguments can be output to a file and passed to the DbMigrator. The arguments are the same as above and must be passed in one per line, however if a configuration file is to be used **ALL** arguments must be passed in via the configuration file. To invoke DbMigrator with a configuration file use: 
 
     DbMigrator.exe -ConfigFile={Full Path}
+
+## Licence
+
+Copyright (c) Optima Energy Systems Ltd, 1999-2014. See the [LICENSE.md file](License.md) for licence rights and
+limitations (Apache 2.0).
