@@ -50,5 +50,5 @@ Alternatively the arguments can be output to a file and passed to the DbMigrator
 
 ## Licence
 
-Copyright (c) Optima Energy Systems Ltd, 1999-2014. See the [LICENSE.md file](License.md) for licence rights and
+Copyright (c) Optima Energy Systems Ltd, 1999-2015. See the [LICENSE.md file](License.md) for licence rights and
 limitations (Apache 2.0).
