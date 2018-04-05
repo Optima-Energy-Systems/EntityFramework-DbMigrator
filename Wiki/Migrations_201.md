@@ -33,19 +33,12 @@ We need a policy or process defined by which we can ensure that the master branc
 So, as soon as Adam decides that he needs a new model, he should:
 
 1. Create and switch to a new branch for the models and migration only.
-
 1. Define his model(s) in code along with any necessary EF configurations, etc.
-
 1. If existing tables are to be changed then models must be arranged such that data may be omitted without breaking anything.
-
 1. Create a migration.
-
 1. Apply the migration to the developers' shared db.
-
 1. Push the changes to source control.
-
 1. Merge the changes with the master branch.
-
 1. Discard the branch.
 
 In this way the db schema and master branch stay in sync and migrations are applied in the correct sequence regardless of anyone's unfinished work.
