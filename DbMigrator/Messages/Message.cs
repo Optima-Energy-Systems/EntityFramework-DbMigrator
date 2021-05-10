@@ -29,19 +29,21 @@ namespace DbMigrator.Messages
 
         private string GetFormattedErrorMessage(Exception exp)
         {
-            if (!string.IsNullOrEmpty(_message))
-                return string.Format("ERROR {0}: {1}\r\n{2}\r\n{3}:\r\n{4}",
-                    Code,
-                    _message,
-                    exp.Message,
-                    exp.Source,
-                    exp.StackTrace);
+            var output = !string.IsNullOrEmpty(_message)
+                ? string.Format("ERROR {0}: {1}\r\n{2}\r\n{3}:\r\n{4}", Code, _message, exp.Message, exp.Source, exp.StackTrace)
+                : string.Format("ERROR {0}: {1}\r\n{2}:\r\n{3}", Code, exp.Message, exp.Source, exp.StackTrace);
 
-            return string.Format("ERROR {0}: {1}\r\n{2}:\r\n{3}",
-                Code,
-                exp.Message,
-                exp.Source,
-                exp.StackTrace);
+            if (exp == null || exp.InnerException == null)
+                return output;
+
+            var innerException = exp.InnerException;
+            while(innerException != null) 
+            {
+                output += string.Format("{3}\tInner Exception: {0}{3}\t\tMessage: {1}{3}\t\tStack Trace: {2}", innerException.GetType().Name, innerException.Message, innerException.StackTrace, Environment.NewLine);
+                innerException = innerException.InnerException; 
+            }
+
+            return output;
         }
     }
 }
